@@ -2,33 +2,38 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from openai import OpenAI
-import json
+import os
 
 app = FastAPI()
 
-# CORS (needed for frontend)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-client = OpenAI()
+
+client = OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY")
+)
 
 
-class DocumentRequest(BaseModel):
+class StudyRequest(BaseModel):
     text: str
 
 
 @app.get("/")
 def home():
-    return {"status": "AI Invoice Extractor running"}
+    return {
+        "status": "AI Invoice Extractor running"
+    }
 
 
 @app.post("/process-document")
-def process_document(request: DocumentRequest):
+def process_document(request: StudyRequest):
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",
@@ -36,25 +41,14 @@ def process_document(request: DocumentRequest):
             {
                 "role": "system",
                 "content": """
-You are an AI that extracts structured data from invoices and business documents.
+You extract structured information from business documents.
 
-Return ONLY valid JSON in this format:
+Return:
+1. Summary
+2. Key points
+3. Important fields
 
-{
-  "summary": "short description of the invoice",
-  "invoice_number": "",
-  "client_name": "",
-  "total_amount": "",
-  "due_date": "",
-  "items": ["item1", "item2"],
-  "key_points": ["important details"]
-}
-
-Rules:
-- Output ONLY JSON
-- No explanations
-- No markdown
-- If missing, use ""
+Be concise and accurate.
 """
             },
             {
@@ -64,12 +58,6 @@ Rules:
         ]
     )
 
-    content = response.choices[0].message.content
-
-    try:
-        return json.loads(content)
-    except:
-        return {
-            "error": "Invalid JSON from model",
-            "raw_output": content
-        }
+    return {
+        "result": response.choices[0].message.content
+    }
