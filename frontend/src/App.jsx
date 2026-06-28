@@ -6,7 +6,7 @@ function App() {
 
   async function processDocument() {
     try {
-      const response = await fetch("http://127.0.0.1:8000/process-document", {
+      const response = await fetch("https://ai-invoice-backend-exzy.onrender.com", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
