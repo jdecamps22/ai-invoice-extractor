@@ -6,20 +6,19 @@ import os
 
 app = FastAPI()
 
-
+# CORS FIX (Vercel + local dev)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://*.vercel.app"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY")
-)
-
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 class StudyRequest(BaseModel):
     text: str
@@ -41,14 +40,15 @@ def process_document(request: StudyRequest):
             {
                 "role": "system",
                 "content": """
-You extract structured information from business documents.
+You are an AI assistant that extracts structured insights from documents.
 
 Return:
 1. Summary
 2. Key points
-3. Important fields
+3. Important details
+4. Insights
 
-Be concise and accurate.
+Be clear and structured.
 """
             },
             {
@@ -59,5 +59,6 @@ Be concise and accurate.
     )
 
     return {
+        "success": True,
         "result": response.choices[0].message.content
     }

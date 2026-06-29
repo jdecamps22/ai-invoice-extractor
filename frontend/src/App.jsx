@@ -1,68 +1,64 @@
 import { useState } from "react";
 
 function App() {
-  const [inputText, setInputText] = useState("");
-  const [result, setResult] = useState("");
+  const [notes, setNotes] = useState("");
+  const [summary, setSummary] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function processDocument() {
+    setLoading(true);
+    setSummary("");
+
     try {
-      const response = await fetch("https://ai-invoice-extractor-izxj.onrender.com/process-document", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          text: inputText,
-        }),
-      });
+      const response = await fetch(
+        "https://ai-invoice-extractor-izxj.onrender.com/process-document",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            text: notes,
+          }),
+        }
+      );
 
       const data = await response.json();
-      setResult(data);
-    } catch (err) {
-      setResult({ error: err.message });
+
+      if (data.success) {
+        setSummary(data.result);
+      } else {
+        setSummary("Error: " + data.error);
+      }
+
+    } catch (error) {
+      setSummary("Failed to fetch: " + error.message);
     }
+
+    setLoading(false);
   }
 
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial" }}>
-      <h1>AI Invoice Processor</h1>
-
-      <p>Extract structured invoice data instantly from documents</p>
+    <div style={{ padding: "20px" }}>
+      <h1>AI Study Tool</h1>
 
       <textarea
-        rows="12"
-        cols="70"
-        placeholder="Paste invoice or receipt here..."
-        value={inputText}
-        onChange={(e) => setInputText(e.target.value)}
-        style={{ padding: "10px", fontSize: "14px" }}
+        rows="10"
+        cols="50"
+        placeholder="Paste your notes here..."
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
       />
 
-      <br /><br />
+      <br />
 
-      <button
-        onClick={processDocument}
-        style={{
-          padding: "10px 20px",
-          fontSize: "16px",
-          cursor: "pointer"
-        }}
-      >
-        Extract Invoice Data
+      <button onClick={processDocument} disabled={loading}>
+        {loading ? "Processing..." : "Extract Insights"}
       </button>
 
       <h2>Result:</h2>
 
-      <pre
-        style={{
-          background: "#f5f5f5",
-          padding: "15px",
-          borderRadius: "8px",
-          overflowX: "auto"
-        }}
-      >
-        {result ? JSON.stringify(result, null, 2) : "No result yet"}
-      </pre>
+      <p>{summary}</p>
     </div>
   );
 }
